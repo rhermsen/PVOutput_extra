@@ -4,7 +4,7 @@
 
 Python script to upload voltage (v6) and and consumption (v3, v4) data, obtained from a HomeWizard P1 meter, to PVOutput.org.
 
-The script makes use of modules provided by:
+The script makes use of modules provided by:<br>
 https://pypi.org/project/python-homewizard-energy/
 https://github.com/homewizard/python-homewizard-energy
 
@@ -39,6 +39,13 @@ Create a shell or bash script to export the System ID and API Key as environment
 This script can be used at system startup (rc.local) or referenced in a Systemd configuration file.
 
 Example start_PVOE.sh file.
+
+```
+mkdir ~/pvoutput
+cd ~/pvoutput
+sudo vi ~/pvoutput/start_PVOE.sh
+```
+
 ```
 #!/usr/bin/bash
 
@@ -57,6 +64,12 @@ source /home/<user>/pvoutput.env
 
 cd /home/<user>/pvoutput
 python3 /home/<user>/pvoutput/PVOutput_extra.py 
+```
+
+Make the shell script executable and, if not already, owned by root:
+```
+sudo chown root:root ~/pvoutput/start_PVOE.sh
+sudo chmod +x ~/pvoutput/start_PVOE.sh
 ```
 
 ## Systemd configuration file
@@ -84,9 +97,11 @@ To have the service started at bootup.
 sudo systemctl enable pvoutput_extra.service
 ```
 
-start the PVOutput Extra service.
+Verify and start the PVOutput Extra service.
+```
 systemctl status pvoutput_extra.service
 sudo systemctl start pvoutput_extra.service
+```
 
 other useful commands:
 sudo systemctl stop pvoutput_extra.service
