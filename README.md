@@ -5,7 +5,7 @@
 Python script to upload voltage (v6) and and consumption (v3, v4) data, obtained from a HomeWizard P1 meter, to PVOutput.org.
 
 The script makes use of modules provided by:<br>
-https://pypi.org/project/python-homewizard-energy/
+https://pypi.org/project/python-homewizard-energy/<br>
 https://github.com/homewizard/python-homewizard-energy
 
 Tested with version python-homewizard-energy-2.0.1
@@ -24,7 +24,7 @@ python3 -m pip install python-homewizard-energy
 
 
 ## Environment Preparation
-Create a pvoutput.env file with your System ID and API Key.
+Create a pvoutput.env file with your System ID and API Key.<br>
 The file can be located in your user directory (e.g. cd ~), and have your user ownership.
 
 ```
@@ -73,7 +73,7 @@ sudo chmod +x ~/pvoutput/start_PVOE.sh
 ```
 
 ## Systemd configuration file
-Ref:
+Ref:<br>
 https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Command%20lines
 
 ```
