@@ -134,5 +134,5 @@ You can use the following example configuration.<br>
 * Axis: 0<br>
 * Summary: Change<br>
 * Credit/Debit: Debit<br>
-* + > Calculate as: Uncumulate
+* \+ > Calculate as: Uncumulate
 
