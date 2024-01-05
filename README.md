@@ -3,6 +3,7 @@
 ## Description
 
 Python script to upload voltage (v6) and and consumption (v3, v4) data, obtained from a HomeWizard P1 meter, to PVOutput.org.
+Gas is uploaded as extended data (v7). Use of extended data requires some additional configuration in the PVOutput.org web-interface. 
 
 The script makes use of modules provided by:<br>
 https://pypi.org/project/python-homewizard-energy/<br>
@@ -120,3 +121,18 @@ Use Journalctl to obtain log details of the PVOutput_extra script.
 journalctl --unit=pvoutput_extra.service -S "2024-01-01 01:00"
 journalctl --unit=pvoutput_extra.service -f
 ```
+
+## Extended data configuration
+
+Configure Extended data via:<br>
+https://pvoutput.org/ > System Editor (Edit system) > Extended Data > v7:<br>
+You can use the following example configuration.<br>
+* Color: #fe0071<br>
+* select Line<br>
+* Label: Gas<br>
+* Unit: m3<br>
+* Axis: 0<br>
+* Summary: Change<br>
+* Credit/Debit: Debit<br>
+* + > Calculate as: Uncumulate
+

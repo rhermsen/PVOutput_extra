@@ -9,6 +9,8 @@ ToDo:
     - Verify if HomeWizard support mDNS (it should), and look to support this.
 
 Done:
+    2024-01-06:
+    - Upload gas consumtion as v7 (extended data).
     2024-01-05:
     - Obtain voltage line via os environment variable. If more than one is provided use the highest voltage value.
     2024-01-04: 
@@ -41,7 +43,7 @@ class PVOutput(object):
     c1 = 3 (need to omit this flag becasue n=1.)
     n = 1
     """
-    def __init__(self, timestamp, voltage, energy, power):
+    def __init__(self, timestamp, voltage, energy, power, gas):
         """
         Read the required data from HomeWizard and send it to PVOutput.
         """
@@ -51,6 +53,7 @@ class PVOutput(object):
         self.voltage = voltage
         self.energy = energy
         self.power = power
+        self.gas = gas
 
     async def uploadData(self):
         pvoutputdata = {
@@ -59,6 +62,7 @@ class PVOutput(object):
         'v3': str(self.energy),
         'v4': str(self.power),
         'v6': str(self.voltage),
+        'v7': str(self.gas),
         'n': '1'
         }
 
@@ -136,6 +140,18 @@ class HomeEnergy(object):
     def set_collection_timestamp_none(self):
         self.last_data = None
 
+    def get_gas_consumption(self):
+        """
+        v7, Total cumulative [m3] imported gas.
+        Extended data which needs configured via Web-GUI e.g.:
+        Extended Data > v7: 
+            color : #fe0071, Area
+            Label: Gas, Unit: m3, 
+            Axis: 0, Summary: Change
+            Credit/Debit: Debit
+        """
+        return self.data.total_gas_m3
+
 
 async def main():
     print(f'PVOutput.py has started at {datetime.now().strftime("%Y%m%d %H:%M:%S")}, and should run infinity.')  
@@ -149,20 +165,25 @@ async def main():
         try:
             getData = HomeEnergy()
             await asyncio.gather(getData.contactHW(HOMEWIZARD_IP))
-            print("Data obtained at:", getData.get_collection_timestamp(), "V6_Voltage:", getData.get_pv_line_voltage(),"V1_Energy_gen:", getData.get_energy_generation(), "V3_Energy:", getData.get_energy_consumption(), "V4_Power:", getData.get_power_consumption() )
-        # except Exception as e:
-        #     print("Failed reading HomeEnergy - ErrorType : {}, Error : {}".format(type(e).__name__, e))
-        except:
-            print(f'Failed reading HomeEnergy at {datetime.now().strftime("%Y%m%d %H:%M")}.')
+            print("Data obtained at:", getData.get_collection_timestamp(), "V6_Voltage:", getData.get_pv_line_voltage(),"V1_Energy_gen:", getData.get_energy_generation(), "V3_Energy:", getData.get_energy_consumption(), "V4_Power:", getData.get_power_consumption(), "V7_Gas:", getData.get_gas_consumption())
+        except Exception as e:
+            exception_time = datetime.now().strftime("%Y%m%d %H:%M:%S")
+            print(f"Failed reading HomeEnergy at {exception_time} - ErrorType : {type(e).__name__}, Error : {e}")
+        # except:
+        #     print(f'Failed reading HomeEnergy at {datetime.now().strftime("%Y%m%d %H:%M:%S")}.')
         else:
             try:
                 sendData = PVOutput(getData.get_collection_timestamp(), 
                                     getData.get_pv_line_voltage(),
                                     getData.get_energy_consumption(),
-                                    getData.get_power_consumption())
+                                    getData.get_power_consumption(),
+                                    getData.get_gas_consumption())
                 await asyncio.gather(sendData.uploadData())
-            except:
-                print(f'Failed to send data at {datetime.now().strftime("%Y%m%d %H:%M")}')
+            except Exception as e:
+                exception_time = datetime.now().strftime("%Y%m%d %H:%M:%S")
+                print(f"Failed to send data at {exception_time} - ErrorType : {type(e).__name__}, Error : {e}")
+            # except:
+            #     print(f'Failed to send data at {datetime.now().strftime("%Y%m%d %H:%M:%S")}')
         await asyncio.sleep(5)
     print("Done")
 
