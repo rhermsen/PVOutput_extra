@@ -24,13 +24,18 @@ python3 -m pip install python-homewizard-energy
 
 
 ## Environment Preparation
-Create a pvoutput.env file with your System ID and API Key.<br>
+Create a pvoutput.env file with your System ID, API Key and line (phase) used for the solar installation.<br>
+You can If more than one line (phase) is used, you can give a all used lines. The highest voltage will be used.<br>
+E.g. possible options:<br>
+1 2 3 12 23 13 123
 The file can be located in your user directory (e.g. cd ~), and have your user ownership.
+
 
 ```
 cd ~
 echo export PVO_SYSTEMID=<systemid> > pvoutput.env
 echo export PVO_APIKEY=<apikey> >> pvoutput.env
+echo export SOLAR_LINE=3 >> pvoutput.env
 ```
 
 

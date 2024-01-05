@@ -7,7 +7,11 @@ Created on Fri Aug 25 23:30:15 2023
 
 ToDo:
     - Verify if HomeWizard support mDNS (it should), and look to support this.
+
+Done:
+    2024-01-05:
     - Obtain voltage line via os environment variable. If more than one is provided use the highest voltage value.
+    2024-01-04: 
     -  I.s.o. asyncio.sleep(300) calculate the required delay to execute every 5min at xx min, 30 sec (where xx is 04, 09, 14, 19...)
 
 """
@@ -77,6 +81,8 @@ class HomeEnergy(object):
         self.device = None
         self.data = None
         self.last_data = None
+        self.line = os.environ['SOLAR_LINE']
+        #self.line = '123'
     
     # Make contact with a energy device
     async def contactHW(self, host):
@@ -87,7 +93,20 @@ class HomeEnergy(object):
             self.last_data = datetime.now()
     
     def get_pv_line_voltage(self):
-        return self.data.active_voltage_l3_v
+        """
+        V6, Voltage of the line (phase) with the solar installation.
+        If multiple lines are configured, the highest voltage is returned.
+        """
+        voltage = []
+        for l in self.line:
+            if l == '1':
+                voltage.append(self.data.active_voltage_l1_v)
+            elif l == '2':
+                voltage.append(self.data.active_voltage_l2_v)
+            elif l == '3':
+                voltage.append(self.data.active_voltage_l3_v)
+        #print("Voltage list =", voltage, "max = ", max(voltage))
+        return max(voltage)
     
     def get_energy_consumption(self):
         """
@@ -119,12 +138,20 @@ class HomeEnergy(object):
 
 
 async def main():
-    print(f'PVOutput.py has started at {datetime.now().strftime("%Y%m%d %H:%M")}, and should run infinity.')
+    print(f'PVOutput.py has started at {datetime.now().strftime("%Y%m%d %H:%M:%S")}, and should run infinity.')  
     while True:
+        now = datetime.now()
+        delay = (4 - (now.minute % 5)) * 60 + (30 - now.second)
+        if delay < 0:
+            delay = 300 + delay
+        #print("Delay =", delay, "Time now =", now.strftime("%Y%m%d %H:%M:%S"))
+        await asyncio.sleep(delay)        
         try:
             getData = HomeEnergy()
             await asyncio.gather(getData.contactHW(HOMEWIZARD_IP))
             print("Data obtained at:", getData.get_collection_timestamp(), "V6_Voltage:", getData.get_pv_line_voltage(),"V1_Energy_gen:", getData.get_energy_generation(), "V3_Energy:", getData.get_energy_consumption(), "V4_Power:", getData.get_power_consumption() )
+        # except Exception as e:
+        #     print("Failed reading HomeEnergy - ErrorType : {}, Error : {}".format(type(e).__name__, e))
         except:
             print(f'Failed reading HomeEnergy at {datetime.now().strftime("%Y%m%d %H:%M")}.')
         else:
@@ -136,7 +163,7 @@ async def main():
                 await asyncio.gather(sendData.uploadData())
             except:
                 print(f'Failed to send data at {datetime.now().strftime("%Y%m%d %H:%M")}')
-        await asyncio.sleep(300)
+        await asyncio.sleep(5)
     print("Done")
 
 asyncio.run(main())
