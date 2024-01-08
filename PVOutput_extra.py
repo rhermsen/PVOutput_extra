@@ -7,9 +7,11 @@ Created on Fri Aug 25 23:30:15 2023
 
 ToDo:
     - Verify if HomeWizard support mDNS (it should), and look to support this.
-    - Include livingroom temperature, obtained external (AirGradient) in the extended data (v9).
+    
 
 Done:
+    2024-01-09:
+    - Include livingroom temperature, obtained external (AirGradient) as v9 (extended data).
     2024-01-08:
     - Allow a flexible use of parameters to be send to PVOutput, omid parameters with a none-type.
     2024-01-07:
@@ -52,7 +54,7 @@ class PVOutput(object):
     c1 = 3 (need to omit this flag becasue n=1.)
     n = 1
     """
-    def __init__(self, timestamp, voltage=None, energy=None, power=None, gas=None, delta_gas=None):
+    def __init__(self, timestamp, voltage=None, energy=None, power=None, gas=None, delta_gas=None, temp=None):
         """
         Paramters to send to PVOutput.
         """
@@ -64,6 +66,7 @@ class PVOutput(object):
         self.power = power
         self.gas = gas
         self.delta_gas = delta_gas
+        self.temp = temp
 
     async def uploadData(self):
         """
@@ -94,6 +97,8 @@ class PVOutput(object):
             pvoutputdata['v7'] = self.gas
         if self.delta_gas != None:
             pvoutputdata['v8'] = self.delta_gas
+        if self.temp != None:
+            pvoutputdata['v9'] = self.temp
         pvoutputdata['n'] = '1'
 
         headerspv = {
@@ -230,16 +235,19 @@ async def main():
         await asyncio.sleep(delay)        
         try:
             getData = HomeEnergy(old_gas)
-            await asyncio.gather(getData.contactHW(HOMEWIZARD_IP))
+            getTemp = AirGradient()
+            task_1 = asyncio.Task(getData.contactHW(HOMEWIZARD_IP))
+            task_2 = asyncio.Task(getTemp.get_temp())
+            # await asyncio.gather(getData.contactHW(HOMEWIZARD_IP))
+            results = await asyncio.gather(task_1, task_2)
             print("Data obtained at:", getData.get_collection_timestamp(), 
                   "V6_Voltage:", getData.get_pv_line_voltage(),
                   "V1_Energy_gen:", getData.get_energy_generation(), 
                   "V3_Energy:", getData.get_energy_consumption(), 
                   "V4_Power:", getData.get_power_consumption(), 
                   "V7_Gas:", getData.get_gas_consumption(),
-                  "v8_Gas delta", getData.get_delta_gas_consumption())
-            # getTemp = AirGradient()
-            # await asyncio.gather(getTemp.get_temp())
+                  "v8_Gas delta", getData.get_delta_gas_consumption(),
+                  "v9_Temp", results[1])
         except Exception as e:
             exception_time = datetime.now().strftime("%Y%m%d %H:%M:%S")
             print(f"Failed reading HomeEnergy at {exception_time} - ErrorType : {type(e).__name__}, Error : {e}")
@@ -250,7 +258,8 @@ async def main():
                                     getData.get_energy_consumption(),
                                     getData.get_power_consumption(),
                                     getData.get_gas_consumption(),
-                                    getData.get_delta_gas_consumption())
+                                    getData.get_delta_gas_consumption(),
+                                    results[1])
                 await asyncio.gather(sendData.uploadData())
                 old_gas = getData.get_gas_consumption()
             except Exception as e:
