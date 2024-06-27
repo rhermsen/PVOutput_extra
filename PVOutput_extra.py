@@ -10,6 +10,10 @@ ToDo:
     
 
 Done:
+    2024-06-27:
+    - Updated for breaking change in python-homewizard-energy==3.0.0. Tested with python-homewizard-energy==6.0.0.
+      sed -i 's/total_power_export_kwh/total_energy_export_kwh/g' PVOutput_extra.py
+      sed -i 's/total_power_import_kwh/total_energy_import_kwh/g' PVOutput_extra.py
     2024-01-09:
     - Include livingroom temperature, obtained external (AirGradient) as v9 (extended data).
     2024-01-08:
@@ -22,6 +26,20 @@ Done:
     - Obtain voltage line via os environment variable. If more than one is provided use the highest voltage value.
     2024-01-04: 
     -  I.s.o. asyncio.sleep(300) calculate the required delay to execute every 5min at xx min, 30 sec (where xx is 04, 09, 14, 19...)
+
+    
+Description:
+    Obtain smartmeter (P1) data using HomeWizard, and forward to PVOutput.org.
+
+    Data obtained from HomeWizard and forwarded:
+    - Energy consumption v3, a cumulative value in Wh.
+    - Power consumption v4, current power consumption in W. A negative value if returning to the grid.
+    - Voltage v6, voltage in v. Highest voltage if multiple lines are in use.
+    - Gas consumption v7 (extended data), a cumulative value in m3.
+    - Gas consumption v8 (extended data), a (calculated) increase (delta) from previous measurement in m3.
+    
+    Data obtained from AirGradient and forwarded:
+    - Room temperature v9 (extended data), current room temperature in degree Celcius.
 
 """
 
@@ -44,7 +62,7 @@ class PVOutput(object):
     
     v3 = Energy [Wh] Consumption, a cumulative value in Wh
     v4 = Power [W] Consumption, current power consumption in W
-    v6 = Voltage (os.environ['SOLAR_LINE']), highest voltage if multiple lines are in us
+    v6 = Voltage (os.environ['SOLAR_LINE']), highest voltage if multiple lines are in use
     v7 = Gas [m3] Consumption, a cumulative value in m3
     v8 = Gas [m3] Consumption, increase from previous measurement in m3
     
@@ -56,7 +74,7 @@ class PVOutput(object):
     """
     def __init__(self, timestamp, voltage=None, energy=None, power=None, gas=None, delta_gas=None, temp=None):
         """
-        Paramters to send to PVOutput.
+        The following attributes can be send to PVOutput if they have a value other than None.
         """
         self.pvoutput_systemid = os.environ['PVO_SYSTEMID']
         self.pvoutput_apikey = os.environ['PVO_APIKEY']
@@ -130,6 +148,9 @@ class HomeEnergy(object):
     
     # Make contact with a energy device
     async def contactHW(self, host):
+        """
+        Obtain all available data from the HomeWizard.
+        """
         async with HomeWizardEnergy(host) as api:
             # Obtain device details and current data
             self.device = await api.device()
@@ -157,14 +178,14 @@ class HomeEnergy(object):
         V3, Total cumulative [Wh] imported energy from the net.
         Imported = Consumption - Generation
         """
-        return int(self.data.total_power_import_kwh * 1000)
+        return int(self.data.total_energy_import_kwh * 1000)
     
     def get_energy_generation(self):
         """
         V1, Total cumulative [Wh] exported energy back into the net.
         Exported = Generation - Consumption
         """
-        return int(self.data.total_power_export_kwh * 1000)
+        return int(self.data.total_energy_export_kwh * 1000)
     
     def get_power_consumption(self):
         """

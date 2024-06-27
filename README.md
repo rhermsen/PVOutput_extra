@@ -10,7 +10,11 @@ https://pypi.org/project/python-homewizard-energy/<br>
 https://github.com/homewizard/python-homewizard-energy
 
 Tested with version python-homewizard-energy-2.0.1
+Tested on 2024-06-27 with version python-homewizard-energy-6.0.0
 
+Update (2024-06-27):
+python-homewizard-energy-3.0.0 introduces a (easy to resolve but) breaking change.
+with commit https://github.com/homewizard/python-homewizard-energy/pull/276/commits/197bbf0ff7a8809026eb57bbcd50cf0a12851d59
 
 ## Python Preparation
 
