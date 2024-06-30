@@ -10,6 +10,8 @@ ToDo:
     
 
 Done:
+    2024-06-30:
+    - Handle AirGradient read errors by returning "0" as temperature.
     2024-06-27:
     - Updated for breaking change in python-homewizard-energy==3.0.0. Tested with python-homewizard-energy==6.0.0.
       sed -i 's/total_power_export_kwh/total_energy_export_kwh/g' PVOutput_extra.py
@@ -238,10 +240,13 @@ class AirGradient(object):
     
     async def get_temp(self):
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.url) as response:
-                json_data = await response.text()
-                data_dict = json.loads(json_data)
-                return data_dict["temp"]
+            try:
+                async with session.get(self.url) as response:
+                    json_data = await response.text()
+                    data_dict = json.loads(json_data)
+                    return data_dict["temp"]
+            except:
+                return "0"            
 
 
 async def main():
